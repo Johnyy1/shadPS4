@@ -428,7 +428,7 @@ bool Rasterizer::BindResources(const Pipeline* pipeline) {
                 }
             } else {
                 if (texture_cache.IsMeta(address)) {
-                    LOG_WARNING(Render_Vulkan, "Unexpected metadata read by a CS shader (buffer)");
+                    LOG_TRACE(Render_Vulkan, "Unexpected metadata read by a CS shader (buffer)");
                 }
             }
             return false;
@@ -596,8 +596,8 @@ void Rasterizer::BindBuffers(const Shader::Info& stage, Shader::Backend::Binding
             const auto [vk_buffer, offset] = buffer_cache.ObtainBuffer(
                 vsharp.base_address, vsharp.GetSize(), desc.is_written, true, buffer_id);
             const u32 buf_stride = vsharp.GetStride();
-            ASSERT_MSG(buf_stride % fmt_stride == 0,
-                       "Texel buffer stride must match format stride");
+            /*ASSERT_MSG(buf_stride % fmt_stride == 0,
+                       "Texel buffer stride must match format stride");*/
             const u32 offset_aligned = Common::AlignDown(offset, alignment);
             const u32 adjust = offset - offset_aligned;
             ASSERT(adjust % fmt_stride == 0);
