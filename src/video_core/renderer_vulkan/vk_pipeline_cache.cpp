@@ -329,11 +329,15 @@ bool PipelineCache::RefreshGraphicsKey() {
             continue;
         }
 
+        const auto base_format =
+            LiverpoolToVK::SurfaceFormat(col_buf.info.format, col_buf.GetNumberFmt());
         key.color_formats[remapped_cb] =
-            LiverpoolToVK::SurfaceFormat(col_buf.GetDataFmt(), col_buf.GetNumberFmt());
+            LiverpoolToVK::AdjustColorBufferFormat(base_format, col_buf.info.comp_swap.Value());
         key.color_num_formats[remapped_cb] = col_buf.GetNumberFmt();
         key.color_num_conversions[remapped_cb] = col_buf.GetNumberConversion();
-        key.color_swizzles[remapped_cb] = col_buf.Swizzle();
+        if (base_format == key.color_formats[remapped_cb]) {
+            key.color_swizzles[remapped_cb] = col_buf.Swizzle();
+        }
     }
 
     fetch_shader = std::nullopt;
