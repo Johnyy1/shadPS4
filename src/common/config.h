@@ -54,6 +54,7 @@ bool dumpShaders();
 bool patchShaders();
 bool isRdocEnabled();
 u32 vblankDiv();
+std::vector<u64> hashesToSkip();
 
 void setDebugDump(bool enable);
 void setCollectShaderForDebug(bool enable);
