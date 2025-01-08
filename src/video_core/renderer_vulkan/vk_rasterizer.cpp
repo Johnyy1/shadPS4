@@ -267,7 +267,9 @@ void Rasterizer::Draw(bool is_indexed, u32 index_offset) {
         cmdbuf.drawIndexed(regs.num_indices, regs.num_instances.NumInstances(), 0,
                            s32(vertex_offset), instance_offset);
     } else {
-        cmdbuf.draw(regs.num_indices, regs.num_instances.NumInstances(), vertex_offset,
+        const u32 num_vertices =
+            regs.primitive_type == AmdGpu::PrimitiveType::RectList ? 4 : regs.num_indices;
+        cmdbuf.draw(num_vertices, regs.num_instances.NumInstances(), vertex_offset,
                     instance_offset);
     }
 
@@ -1069,19 +1071,13 @@ void Rasterizer::UpdateViewportScissorState() {
         if (vp.xscale == 0) {
             continue;
         }
-        const auto xoffset = vp_ctl.xoffset_enable ? vp.xoffset : 0.f;
-        const auto xscale = vp_ctl.xscale_enable ? vp.xscale : 1.f;
-        const auto yoffset = vp_ctl.yoffset_enable ? vp.yoffset : 0.f;
-        const auto yscale = vp_ctl.yscale_enable ? vp.yscale : 1.f;
-        const auto zoffset = vp_ctl.zoffset_enable ? vp.zoffset : 0.f;
-        const auto zscale = vp_ctl.zscale_enable ? vp.zscale : 1.f;
         viewports.push_back({
-            .x = xoffset - xscale,
-            .y = yoffset - yscale,
-            .width = xscale * 2.0f,
-            .height = yscale * 2.0f,
-            .minDepth = zoffset - zscale * reduce_z,
-            .maxDepth = zscale + zoffset,
+            .x = vp.xoffset - vp.xscale,
+            .y = vp.yoffset - vp.yscale,
+            .width = vp.xscale * 2.0f,
+            .height = vp.yscale * 2.0f,
+            .minDepth = vp.zoffset - vp.zscale * reduce_z,
+            .maxDepth = vp.zscale + vp.zoffset,
         });
 
         auto vp_scsr = scsr;

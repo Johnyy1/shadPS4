@@ -226,6 +226,31 @@ void BufferCache::BindIndexBuffer(u32 index_offset) {
     const VAddr index_address =
         regs.index_base_address.Address<VAddr>() + index_offset * index_size;
 
+    if (regs.primitive_type == AmdGpu::PrimitiveType::QuadList) {
+        // Convert indices.
+        const u32 new_index_size = regs.num_indices * index_size * 6 / 4;
+        const auto [data, offset] = stream_buffer.Map(new_index_size);
+        const auto index_ptr = reinterpret_cast<u8*>(index_address);
+        switch (index_type) {
+        case vk::IndexType::eUint16:
+            Vulkan::LiverpoolToVK::ConvertQuadToTriangleListIndices<u16>(data, index_ptr,
+                                                                         regs.num_indices);
+            break;
+        case vk::IndexType::eUint32:
+            Vulkan::LiverpoolToVK::ConvertQuadToTriangleListIndices<u32>(data, index_ptr,
+                                                                         regs.num_indices);
+            break;
+        default:
+            UNREACHABLE_MSG("Unsupported QuadList index type {}", vk::to_string(index_type));
+            break;
+        }
+        stream_buffer.Commit();
+
+        // Bind index buffer.
+        const auto cmdbuf = scheduler.CommandBuffer();
+        cmdbuf.bindIndexBuffer(stream_buffer.Handle(), offset, index_type);
+    }
+
     // Bind index buffer.
     const u32 index_buffer_size = regs.num_indices * index_size;
     const auto [vk_buffer, offset] = ObtainBuffer(index_address, index_buffer_size, false);
